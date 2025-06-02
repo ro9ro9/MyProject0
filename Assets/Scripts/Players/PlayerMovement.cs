@@ -11,10 +11,12 @@ public class PlayerMovement : MonoBehaviour
     [Header("스태미너")]
     public float maxStamina = 5f;
     public float stamina = 5f;
-    public float dashStaminaCost = 1f;    
+    public float dashStaminaCost = 1f;
     public float staminaRegenRate = 1f;
     public float lowStaminaSpeed = 2f;
 
+    public static PlayerMovement Instance;
+    private float reloadMoveSpeed;
     private bool isDashing;
     private bool isJumping;
     private Vector3 velocity;
@@ -31,6 +33,11 @@ public class PlayerMovement : MonoBehaviour
         Move();
         ApplyGravity();
         RegenerateStamina();
+    }
+
+    private void Awake()
+    {
+        Instance = this;
     }
 
     void Move()
@@ -86,5 +93,9 @@ public class PlayerMovement : MonoBehaviour
             stamina += staminaRegenRate * Time.deltaTime;
             stamina = Mathf.Clamp(stamina, 0, maxStamina);
         }
+    }
+    public void SetReloadSpeed(bool isReloading)
+    {
+        moveSpeed = isReloading ? reloadMoveSpeed * 0.5f : reloadMoveSpeed;
     }
 }
