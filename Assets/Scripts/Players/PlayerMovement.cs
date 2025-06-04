@@ -6,7 +6,7 @@ public class PlayerMovement : MonoBehaviour
     public float moveSpeed = 5f;
     public float dashSpeed = 10f;
     public float jumpPower = 6f;
-    public float gravity = -20f;
+    public float gravity = -9.8f;
 
     [Header("스태미너")]
     public float maxStamina = 5f;
@@ -14,31 +14,34 @@ public class PlayerMovement : MonoBehaviour
     public float dashStaminaCost = 1f;
     public float staminaRegenRate = 1f;
     public float lowStaminaSpeed = 2f;
+    private float lowStaminaTimer = 0f;
+    private const float lowStaminaDuration = 2f;
 
     public static PlayerMovement Instance;
     private float reloadMoveSpeed;
+    private bool isReloading = false;
     private bool isDashing;
     private bool isJumping;
     private Vector3 velocity;
     private CharacterController controller;
 
+    public CameraController cameraController;
+
 
     void Start()
     {
         controller = GetComponent<CharacterController>();
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     void Update()
     {
         Move();
         ApplyGravity();
-        RegenerateStamina();
+        RegenerateStamina();      
     }
 
-    private void Awake()
-    {
-        Instance = this;
-    }
+    private void Awake() => Instance = this;
 
     void Move()
     {
@@ -62,19 +65,44 @@ public class PlayerMovement : MonoBehaviour
 
         stamina = Mathf.Clamp(stamina, 0, maxStamina);
 
-        float speed = stamina <= 0 ? lowStaminaSpeed : (isDashing ? dashSpeed : moveSpeed);
-
-        if (controller.isGrounded)
+        // 스태미너가 0이 되면 타이머 발동
+        if (stamina <= 0 && lowStaminaTimer <= 0f)
         {
-            if (Input.GetButtonDown("Jump"))
-            {
-                velocity.y = jumpPower;
-            }
+            lowStaminaTimer = lowStaminaDuration;
+        }
+
+        // 타이머 감소
+        if (lowStaminaTimer > 0f)
+        {
+            lowStaminaTimer -= Time.deltaTime;
+        }
+
+        // 이동속도 결정
+        float speed = moveSpeed;
+        if (isReloading)
+        {
+            speed *= 0.5f;
+        }
+        if (lowStaminaTimer > 0f)
+        {
+            speed = Mathf.Min(speed, lowStaminaSpeed); // 둘 중 더 느린 속도로 적용
+        }
+
+        if (controller.isGrounded && Input.GetButtonDown("Jump"))
+        {
+            velocity.y = jumpPower;
         }
 
         Vector3 finalMove = moveDir * speed;
         controller.Move(finalMove * Time.deltaTime);
     }
+
+    public void SetReloadSpeed(bool reloading)
+    {
+        isReloading = reloading;
+        reloadMoveSpeed = moveSpeed; // 기본 이동속도를 저장
+    }
+
 
     void ApplyGravity()
     {
@@ -93,9 +121,5 @@ public class PlayerMovement : MonoBehaviour
             stamina += staminaRegenRate * Time.deltaTime;
             stamina = Mathf.Clamp(stamina, 0, maxStamina);
         }
-    }
-    public void SetReloadSpeed(bool isReloading)
-    {
-        moveSpeed = isReloading ? reloadMoveSpeed * 0.5f : reloadMoveSpeed;
-    }
+    }    
 }

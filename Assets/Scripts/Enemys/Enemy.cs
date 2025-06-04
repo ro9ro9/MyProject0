@@ -1,23 +1,39 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class Enemy : MonoBehaviour
 {
-    public float EnemyHP = 1f;
+    public float attackRange = 2f;
+    public float attackCooldown = 1f;
+    public float damage = 1f;
 
-    public void TakeDamage(float damage)
+    Transform player;
+    NavMeshAgent agent;
+    float lastAttackTime;
+
+    void Start()
     {
-        EnemyHP -= damage;
-        if (EnemyHP <= 0f)
+        agent = GetComponent<NavMeshAgent>();
+        player = GameObject.FindGameObjectWithTag("Player").transform;
+    }
+
+    void Update()
+    {
+        agent.SetDestination(player.position);
+
+        float distance = Vector3.Distance(transform.position, player.position);
+        if (distance <= attackRange && Time.time - lastAttackTime > attackCooldown)
         {
-            Die();
+            player.GetComponent<PlayerHealth>().TakeDamage((int)damage);
+            lastAttackTime = Time.time;
         }
     }
 
-    private void Die()
+    public void TakeDamage(float dmg)
     {
-        // Àû »ç¸Á Ã³¸® (¿¹: ÆÄ±«)
         Destroy(gameObject);
+        KillCounter.instance.AddKill();
     }
 }

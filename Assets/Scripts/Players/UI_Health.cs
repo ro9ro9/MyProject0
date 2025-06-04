@@ -8,16 +8,22 @@ public class UI_Health : MonoBehaviour
     public Image[] hearts;
     public Sprite fullHeart;
     public Sprite emptyHeart;
-    void Awake()
-    {
-        instance = this;
-    }
+    void Awake() => instance = this;
 
     public void UpdateHearts(int health)
     {
         for (int i = 0; i < hearts.Length; i++)
         {
-            hearts[i].sprite = i < health ? fullHeart : emptyHeart;
+            if (i < health)
+            {
+                hearts[i].sprite = fullHeart;
+                hearts[i].enabled = true;
+            }
+            else
+            {
+                hearts[i].sprite = emptyHeart;
+                hearts[i].enabled = true;
+            }
         }
     }
 }
